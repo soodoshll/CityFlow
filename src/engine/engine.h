@@ -48,10 +48,12 @@ namespace CityFlow {
 
         size_t step = 0;
         size_t activeVehicleCount = 0;
+        int seed;
         boost::mutex lock;
         boost::barrier startBarrier, endBarrier;
         std::vector<boost::thread> threadPool;
         bool finished = false;
+        std::string dir;
         std::ofstream logOut;
 
         bool rlTrafficLight;
@@ -101,7 +103,7 @@ namespace CityFlow {
 
         bool loadFlow(const std::string &jsonFilename);
 
-        std::vector<Vehicle *> getRunningVehicle() const;
+        std::vector<const Vehicle *> getRunningVehicles(bool includeWaiting=false) const;
 
         void scheduleLaneChange();
 
@@ -138,6 +140,8 @@ namespace CityFlow {
 
         size_t getVehicleCount() const;
 
+        std::vector<std::string> getVehicles(bool includeWaiting = false) const;
+
         std::map<std::string, int> getLaneVehicleCount() const;
 
         std::map<std::string, int> getLaneWaitingVehicleCount() const;
@@ -152,7 +156,9 @@ namespace CityFlow {
 
         void setTrafficLightPhase(const std::string &id, int phaseIndex);
 
-        void reset();
+        void setReplayLogFile(const std::string &logFile);
+        
+        void reset(bool resetRnd = false);
 
         // archive
         void load(const Archive &archive) { archive.resume(*this); }

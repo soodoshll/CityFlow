@@ -84,6 +84,12 @@ Data Access API
 - Get number of total running vehicles.
 - Return an ``int``
 
+``get_vehicles(include_waiting=False)``:
+
+- Get all vehicle ids
+- Include vehicles in lane's waiting buffer if ``include_waiting=True``
+- Return an ``list`` of vehicle ids
+
 ``get_lane_vehicle_count()``: 
 
 - Get number of running vehicles on each lane.
@@ -128,3 +134,16 @@ Control API
 
 - Reset the simulation (clear all vehicles and set simulation time back to zero)
 - Notice that this does not reset random state, so each simulation after reset may be different.
+- This does not clear old replays, instead, it appends new replays to ``replayLogFile``.
+
+
+.. _set-replay-file:
+
+Other API
+---------
+
+``set_replay_file(replay_file)``: 
+
+- ``replay_file`` should be a path related to ``dir`` in config file
+- Set ``replayLogFile`` to ``replay_file``, newly generated replays will be output into ``replay_file``
+- This is useful when you want to look at a specific episode for debugging purposes

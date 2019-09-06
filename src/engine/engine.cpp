@@ -4,11 +4,9 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
-#include <fstream>
 #include <iostream>
 #include <memory>
 
-#include <cstdio>
 #include <ctime>
 namespace CityFlow {
 
@@ -53,9 +51,9 @@ namespace CityFlow {
             warnings = false;
             rlTrafficLight = getJsonMember<bool>("rlTrafficLight", document);
             laneChange = getJsonMember<bool>("laneChange", document, false);
-            int seed = getJsonMember<int>("seed", document);
+            seed = getJsonMember<int>("seed", document);
             rnd.seed(seed);
-            std::string dir = getJsonMember<const char*>("dir", document);
+            dir = getJsonMember<const char*>("dir", document);
             std::string roadnetFile = getJsonMember<const char*>("roadnetFile", document);
             std::string flowFile = getJsonMember<const char*>("flowFile", document);
 
@@ -423,8 +421,8 @@ namespace CityFlow {
         startBarrier.wait();
         endBarrier.wait();
         std::sort(pushBuffer.begin(), pushBuffer.end(), vehicleCmp);
-        for (auto &vehicle_pair : pushBuffer) {
-            Vehicle *vehicle = vehicle_pair.first;
+        for (auto &vehiclePair : pushBuffer) {
+            Vehicle *vehicle = vehiclePair.first;
             Drivable *drivable = vehicle->getChangedDrivable();
             if (drivable != nullptr) {
                 drivable->pushVehicle(vehicle);
@@ -462,9 +460,7 @@ namespace CityFlow {
 
     void Engine::updateLog() {
         std::string result;
-        for (auto &vehicle: getRunningVehicle()) {
-            if (!vehicle->isRunning() || vehicle->isEnd() || !vehicle->isReal())
-                continue;
+        for (const Vehicle* vehicle: getRunningVehicles()) {
             Point pos = vehicle->getPoint();
             Point dir = vehicle->getCurDrivable()->getDirectionByDistance(vehicle->getDistance());
 
@@ -475,11 +471,11 @@ namespace CityFlow {
         }
         result.append(";");
 
-        for (Road &road : roadnet.getRoads()) {
+        for (const Road &road : roadnet.getRoads()) {
             if (road.getEndIntersection().isVirtualIntersection())
                 continue;
             result.append(road.getId());
-            for (Lane &lane : road.getLanes()) {
+            for (const Lane &lane : road.getLanes()) {
                 if (lane.getEndIntersection()->isImplicitIntersection()){
                     result.append(" i");
                     continue;
@@ -558,6 +554,15 @@ namespace CityFlow {
         return activeVehicleCount;
     }
 
+    std::vector<std::string> Engine::getVehicles(bool includeWaiting) const {
+        std::vector<std::string> ret;
+        ret.reserve(activeVehicleCount);
+        for (const Vehicle* vehicle : getRunningVehicles(includeWaiting)) {
+            ret.emplace_back(vehicle->getId());
+        }
+        return ret;
+    }
+
     std::map<std::string, int> Engine::getLaneVehicleCount() const {
         std::map<std::string, int> ret;
         for (const Lane *lane : roadnet.getLanes()) {
@@ -594,9 +599,7 @@ namespace CityFlow {
 
     std::map<std::string, double> Engine::getVehicleSpeed() const {
         std::map<std::string, double> ret;
-        for (auto &vehicle_pair: vehiclePool) {
-            auto &vehicle = vehicle_pair.second.first;
-            if (!vehicle->isRunning()) continue;
+        for (const Vehicle* vehicle : getRunningVehicles()) {
             ret.emplace(vehicle->getId(), vehicle->getSpeed());
         }
         return ret;
@@ -604,9 +607,7 @@ namespace CityFlow {
 
     std::map<std::string, double> Engine::getVehicleDistance() const {
         std::map<std::string, double> ret;
-        for (auto &vehicle_pair: vehiclePool) {
-            auto &vehicle = vehicle_pair.second.first;
-            if (!vehicle->isRunning()) continue;
+        for (const Vehicle* vehicle : getRunningVehicles()) {
             ret.emplace(vehicle->getId(), vehicle->getDistance());
         }
         return ret;
@@ -649,7 +650,16 @@ namespace CityFlow {
         roadnet.getIntersectionById(id)->getTrafficLight().setPhase(phaseIndex);
     }
 
-    void Engine::reset() {
+    void Engine::setReplayLogFile(const std::string &logFile) {
+        if (!saveReplay) {
+            std::cerr << "saveReplay is not set to true!" << std::endl;
+            return;
+        }
+        if (logOut.is_open()) logOut.close();
+        logOut.open(dir + logFile);
+    }
+
+    void Engine::reset(bool resetRnd) {
         for (auto &vehiclePair : vehiclePool) delete vehiclePair.second.first;
         for (auto &pool : threadVehiclePool) pool.clear();
         vehiclePool.clear();
@@ -657,6 +667,10 @@ namespace CityFlow {
         for (auto &flow : flows) flow.reset();
         step = 0;
         activeVehicleCount = 0;
+        if (resetRnd) {
+            rnd = std::mt19937();
+            rnd.seed(seed);
+        }
     }
 
     Engine::~Engine() {
@@ -669,6 +683,7 @@ namespace CityFlow {
         for (auto &thread : threadPool) thread.join();
         for (auto &vehiclePair : vehiclePool) delete vehiclePair.second.first;
     }
+    
     void Engine::setLogFile(const std::string &jsonFile, const std::string &logFile) {
         if (!writeJsonToFile(jsonFile, jsonRoot)) {
             std::cerr << "write roadnet log file error" << std::endl;
@@ -676,16 +691,14 @@ namespace CityFlow {
         logOut.open(logFile);
     }
 
-    std::vector<Vehicle *> Engine::getRunningVehicle() const {
-        std::vector<Vehicle *> ret;
+    std::vector<const Vehicle *> Engine::getRunningVehicles(bool includeWaiting) const {
+        std::vector<const Vehicle *> ret;
         ret.reserve(activeVehicleCount);
-        for (const Lane *lane:roadnet.getLanes()) {
-            auto vehicles = lane->getVehicles();
-            ret.insert(ret.end(), vehicles.begin(), vehicles.end());
-        }
-        for (const LaneLink *laneLink:roadnet.getLaneLinks()) {
-            auto vehicles = laneLink->getVehicles();
-            ret.insert(ret.end(), vehicles.begin(), vehicles.end());
+        for (const auto &vehiclePair: vehiclePool) {
+            const Vehicle *vehicle = vehiclePair.second.first;
+            if (vehicle->isReal() && (includeWaiting || vehicle->isRunning())) {
+                ret.emplace_back(vehicle);
+            }
         }
         return ret;
     }
