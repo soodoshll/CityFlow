@@ -9,7 +9,7 @@
 namespace py = pybind11;
 using namespace py::literals;
 
-PYBIND11_MODULE(cityflow, m) {
+PYBIND11_MODULE(_cityflow, m) {
     py::class_<CityFlow::Engine>(m, "Engine")
         .def(py::init<const std::string&, int>(),
             "config_file"_a,

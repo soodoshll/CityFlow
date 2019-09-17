@@ -4,7 +4,7 @@ import sys
 import platform
 import subprocess
 
-from setuptools import setup, Extension
+from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
 
@@ -54,7 +54,7 @@ class CMakeBuild(build_ext):
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env)
-        subprocess.check_call(['cmake', '--build', '.', '--target', 'cityflow'] + build_args, cwd=self.build_temp)
+        subprocess.check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)
 
 
 setup(
@@ -63,8 +63,10 @@ setup(
     author='Huichu Zhang',
     author_email='zhc@apex.sjtu.edu.cn',
     description='CityFlow: A Multi-Agent Reinforcement Learning Environment for Large Scale City Traffic Scenario',
+    packages=find_packages(),
     long_description='',
-    ext_modules=[CMakeExtension('cityflow')],
+    include_package_data=True,
+    ext_modules=[CMakeExtension('cityflow/_cityflow')],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False
 )

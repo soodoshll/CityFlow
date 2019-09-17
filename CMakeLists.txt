@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(cityflow)
+project(_cityflow)
 
 set(CMAKE_CXX_STANDARD "11" CACHE STRING "")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -DRAPIDJSON_HAS_STDSTRING=1")
@@ -75,3 +75,5 @@ if(VERSION)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DVERSION=${VERSION})
 endif()
 
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "${PYTHON_MODULE_PREFIX}"
+        SUFFIX "${PYTHON_MODULE_EXTENSION}")
