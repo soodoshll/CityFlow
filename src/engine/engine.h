@@ -169,6 +169,10 @@ namespace CityFlow {
         void load(const Archive &archive) { archive.resume(*this); }
         Archive snapshot() { return Archive(*this); }
         void loadFromFile(const char *fileName);
+
+        // renderer
+        std::string roadnetString() const;
+        std::string getLog() const;
     };
 
 }

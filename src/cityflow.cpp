@@ -32,7 +32,9 @@ PYBIND11_MODULE(_cityflow, m) {
         .def("reset", &CityFlow::Engine::reset, "seed"_a=false)
         .def("load", &CityFlow::Engine::load, "archive"_a)
         .def("snapshot", &CityFlow::Engine::snapshot)
-        .def("load_from_file", &CityFlow::Engine::loadFromFile, "path"_a);
+        .def("load_from_file", &CityFlow::Engine::loadFromFile, "path"_a)
+        .def("roadnet_string", &CityFlow::Engine::roadnetString)
+        .def("get_log", &CityFlow::Engine::getLog);
 
     py::class_<CityFlow::Archive>(m, "Archive")
         .def(py::init<const CityFlow::Engine&>())

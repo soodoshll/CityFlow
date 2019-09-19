@@ -6,6 +6,8 @@
 #include <limits>
 #include <iostream>
 #include <memory>
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
 
 #include <ctime>
 namespace CityFlow {
@@ -472,6 +474,10 @@ namespace CityFlow {
     }
 
     void Engine::updateLog() {
+        logOut << getLog() << std::endl;
+    }
+
+    std::string Engine::getLog() const {
         std::string result;
         for (const Vehicle* vehicle: getRunningVehicles()) {
             Point pos = vehicle->getPoint();
@@ -480,7 +486,7 @@ namespace CityFlow {
             int lc = vehicle->lastLaneChangeDirection();
             result.append(
                     double2string(pos.x) + " " + double2string(pos.y) + " " + double2string(atan2(dir.y, dir.x)) + " "
-                            + vehicle->getId() + " " + std::to_string(lc) + ",");
+                    + vehicle->getId() + " " + std::to_string(lc) + ",");
         }
         result.append(";");
 
@@ -505,7 +511,7 @@ namespace CityFlow {
             }
             result.append(",");
         }
-        logOut << result << std::endl;
+        return result;
     }
 
     void Engine::updateLeaderAndGap() {
@@ -755,5 +761,13 @@ namespace CityFlow {
     void Engine::loadFromFile(const char *fileName) {
         Archive archive(*this, fileName);
         archive.resume(*this);
+    }
+
+    std::string Engine::roadnetString() const {
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        jsonRoot.Accept(writer);
+        std::string output = buffer.GetString();
+        return output;
     }
 }
