@@ -66,6 +66,9 @@ setup(
     packages=find_packages(),
     long_description='',
     include_package_data=True,
+    package_data={
+        'cityflow': ["render/statics/*", "render/templates/*"]
+    },
     ext_modules=[CMakeExtension('cityflow/_cityflow')],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False
