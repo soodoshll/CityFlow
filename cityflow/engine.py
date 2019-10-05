@@ -21,15 +21,12 @@ class Engine(_cityflow.Engine):
     def servre_launch(self):
         self.socketio.run(self.app, host=self.host, port=self.port)
 
-    def server_init(self, host = "0.0.0.0", port = 8080):
-        self.host = host
-        self.port = port
+    def server_init(self):
 
         self.app = Flask(__name__, template_folder=TEMPLATES_PATH)
-        self.app.config['SECRET_KEY'] = 'secret!'
 
         self.app.add_url_rule(rule="/", view_func=self.index)
-        self.app.add_url_rule(rule="/statics/<path:path>", view_func=self.library)
+        self.app.add_url_rule(rule="/statics/<path:path>", view_func=self.get_static_file)
 
         self.socketio = SocketIO(self.app)
         self.socketio.on_event('connect', self.handler_connected)
@@ -44,10 +41,9 @@ class Engine(_cityflow.Engine):
         self.server_thread.start()
         time.sleep(5) # wait for existing connections
         if self.connect_num <= 0:
-            webbrowser.open("http://%s:%d/"%(host, port))
+            webbrowser.open("http://%s:%d/"%(self.host, self.port))
         print("wait for connect")
         self.sem.acquire()
-        print("stage 1")
 
     def index(self):
         return render_template('render.html', ws_addr="http://%s:%d" % (self.host, self.port))
@@ -63,7 +59,6 @@ class Engine(_cityflow.Engine):
         emit('render', self.get_log())
 
     def handler_update_finish(self):
-        print("update finish")
         self.sem.release()
         self.render_sem.acquire()
         emit('render', self.get_log())
@@ -79,5 +74,5 @@ class Engine(_cityflow.Engine):
         self.render_sem.release()
         self.sem.acquire()
 
-    def library(self, path):
+    def get_static_file(self, path):
         return send_from_directory(STATICS_PATH, path)
