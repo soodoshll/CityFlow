@@ -200,6 +200,8 @@ namespace CityFlow {
         vehicleValue.AddMember("yieldDistance", vehicle.vehicleInfo.yieldDistance, allocator);
         vehicleValue.AddMember("turnSpeed", vehicle.vehicleInfo.turnSpeed, allocator);
 
+        vehicleValue.AddMember("waitingTime", vehicle.waitingTime, allocator);
+        vehicleValue.AddMember("passedRoadCnt", vehicle.passedRoadCnt, allocator);
 
         // save route
         rapidjson::Value routeValue(rapidjson::kArrayType);
@@ -386,6 +388,9 @@ namespace CityFlow {
 
             Vehicle *vehicle = new Vehicle(vehicleInfo,
                     getJsonMember<const char *>("id", vehicleValue), &engine);
+
+            vehicle->waitingTime = getJsonMember<double>("waitingTime", vehicleValue);
+            vehicle->passedRoadCnt = getJsonMember<int>("passedRoadCnt", vehicleValue);
 
             auto enterTime = getJsonMember<double>("enterTime", vehicleValue);
             vehicle->enterTime = enterTime;

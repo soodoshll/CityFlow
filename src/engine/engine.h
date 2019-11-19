@@ -18,6 +18,7 @@ namespace CityFlow {
     class Engine {
         friend class Archive;
     private:
+        using stepResult = std::map<std::string, std::pair<double, int>>;
         static bool vehicleCmp(const std::pair<Vehicle *, double> &a, const std::pair<Vehicle *, double> &b) {
             return a.second > b.second;
         }
@@ -54,6 +55,8 @@ namespace CityFlow {
         bool rlTrafficLight;
         bool laneChange;
         int manuallyPushCnt = 0;
+
+        stepResult travelTime;
 
         int finishedVehicleCnt = 0;
         double cumulativeTravelTime = 0;
@@ -112,6 +115,7 @@ namespace CityFlow {
         void insertShadow(Vehicle *vehicle);
 
     public:
+
         std::mt19937 rnd;
 
         Engine(const std::string &configFile, int threadNum);
@@ -124,7 +128,7 @@ namespace CityFlow {
 
         void notifyCross();
 
-        void nextStep();
+        stepResult nextStep();
 
         bool checkPriority(int priority);
 
@@ -176,6 +180,8 @@ namespace CityFlow {
         void load(const Archive &archive) { archive.resume(*this); }
         Archive snapshot() { return Archive(*this); }
         void loadFromFile(const char *fileName);
+
+        stepResult getWaitingTime(bool mode=true) const;
     };
 
 }

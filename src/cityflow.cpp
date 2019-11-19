@@ -24,6 +24,7 @@ PYBIND11_MODULE(cityflow, m) {
         .def("get_leader", &CityFlow::Engine::getLeader, "vehicle_id"_a)
         .def("get_current_time", &CityFlow::Engine::getCurrentTime)
         .def("get_average_travel_time", &CityFlow::Engine::getAverageTravelTime)
+        .def("get_waiting_time", &CityFlow::Engine::getWaitingTime, "mode"_a)
         .def("set_tl_phase", &CityFlow::Engine::setTrafficLightPhase, "intersection_id"_a, "phase_id"_a)
         .def("set_vehicle_speed", &CityFlow::Engine::setVehicleSpeed, "vehicle_id"_a, "speed"_a)
         .def("set_replay_file", &CityFlow::Engine::setReplayLogFile, "replay_file"_a)

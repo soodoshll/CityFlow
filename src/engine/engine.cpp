@@ -298,6 +298,8 @@ namespace CityFlow {
                     vehicleRemoveBuffer.insert(vehicle);
                     if (!vehicle->getLaneChange()->hasFinished()) {
                         vehicleMap.erase(vehicle->getId());
+                        travelTime.emplace(vehicle->getId(),
+                                std::make_pair(vehicle->getWaitingTime(), vehicle->getPassedRoadCnt()));
                         finishedVehicleCnt += 1;
                         cumulativeTravelTime += getCurrentTime() - vehicle->getEnterTime();
                     }
@@ -403,7 +405,7 @@ namespace CityFlow {
         startBarrier.wait();
         std::vector<std::pair<Vehicle *, double>> buffer;
         for (auto vehicle: vehicles)
-            if (vehicle->isRunning()) 
+            if (vehicle->isRunning())
                 vehicleControl(*vehicle, buffer);
         {
             std::lock_guard<std::mutex> guard(lock);
@@ -414,15 +416,20 @@ namespace CityFlow {
 
     void Engine::threadUpdateAction(std::set<Vehicle *> &vehicles) {
         startBarrier.wait();
-        for (auto vehicle: vehicles)
+        for (auto vehicle: vehicles) {
             if (vehicle->isRunning()) {
-                if (vehicleRemoveBuffer.count(vehicle->getBufferBlocker())){
+                if (vehicleRemoveBuffer.count(vehicle->getBufferBlocker())) {
                     vehicle->setBlocker(nullptr);
                 }
 
                 vehicle->update();
                 vehicle->clearSignal();
+
+                if (vehicle->getSpeed() <= 0.1) {
+                    vehicle->incWaitingTime(this->getInterval());
+                }
             }
+        }
         endBarrier.wait();
     }
 
@@ -563,7 +570,8 @@ namespace CityFlow {
         endBarrier.wait();
     }
 
-    void Engine::nextStep() {
+    Engine::stepResult Engine::nextStep() {
+        travelTime.clear();
         for (auto &flow : flows)
             flow.nextStep(interval);
         planRoute();
@@ -591,6 +599,7 @@ namespace CityFlow {
         }
 
         step += 1;
+        return travelTime;
     }
 
     void Engine::initSegments() {
@@ -847,6 +856,16 @@ namespace CityFlow {
             if (leader) return leader->getId();
             else return "";
         }
+    }
+
+    Engine::stepResult Engine::getWaitingTime(bool mode) const {
+        if (!mode)
+            return travelTime;
+        stepResult result;
+        for (const auto &vehicle: getRunningVehicles()) {
+            result.emplace(vehicle->getId(), std::make_pair(vehicle->getWaitingTime(), vehicle->getPassedRoadCnt()));
+        }
+        return result;
     }
 
 }

@@ -19,7 +19,7 @@ namespace CityFlow {
     Vehicle::Vehicle(const Vehicle &vehicle, Flow *flow)
         : vehicleInfo(vehicle.vehicleInfo), controllerInfo(this, vehicle.controllerInfo),
           laneChangeInfo(vehicle.laneChangeInfo), buffer(vehicle.buffer), priority(vehicle.priority),
-          id(vehicle.id), engine(vehicle.engine),
+          id(vehicle.id), waitingTime(vehicle.waitingTime), passedRoadCnt(vehicle.passedRoadCnt), engine(vehicle.engine),
           laneChange(std::make_shared<SimpleLaneChange>(this, *vehicle.laneChange)),
           flow(flow){
         enterTime = vehicle.enterTime;
@@ -28,7 +28,8 @@ namespace CityFlow {
     Vehicle::Vehicle(const Vehicle &vehicle, const std::string &id, Engine *engine, Flow *flow)
         : vehicleInfo(vehicle.vehicleInfo), controllerInfo(this, vehicle.controllerInfo),
           laneChangeInfo(vehicle.laneChangeInfo), buffer(vehicle.buffer), 
-          id(id), engine(engine), laneChange(std::make_shared<SimpleLaneChange>(this)),
+          id(id), waitingTime(vehicle.waitingTime), passedRoadCnt(vehicle.passedRoadCnt),
+          engine(engine), laneChange(std::make_shared<SimpleLaneChange>(this)),
           flow(flow){
         while (engine->checkPriority(priority = engine->rnd()));
         controllerInfo.router.setVehicle(this);
@@ -59,6 +60,8 @@ namespace CityFlow {
                 if (nextDrivable == nullptr) {
                     assert(controllerInfo.router.isLastRoad(drivable));
                     setEnd(true);
+                }else if (nextDrivable->isLaneLink()) {
+                    incPassedRoadCnt();
                 }
                 drivable = nextDrivable;
                 setDrivable(drivable);

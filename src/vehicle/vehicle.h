@@ -102,6 +102,8 @@ namespace CityFlow {
 
         int priority;
         std::string id;
+        double waitingTime = 0;
+        int passedRoadCnt = 0;
         double enterTime;
 
         Engine *engine;
@@ -296,6 +298,14 @@ namespace CityFlow {
         inline Vehicle *getPartner() const { return laneChangeInfo.partner; }
 
         inline void setId(const std::string & id) { this->id = id; }
+
+        inline void incWaitingTime(double interval) { waitingTime += interval; }
+
+        inline double getWaitingTime() const { return waitingTime; }
+
+        inline int getPassedRoadCnt() const { return passedRoadCnt; }
+
+        inline void incPassedRoadCnt() { ++passedRoadCnt; }
 
         //for lane change
         inline void makeLaneChangeSignal(double interval){
