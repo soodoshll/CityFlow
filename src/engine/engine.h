@@ -182,6 +182,10 @@ namespace CityFlow {
         void loadFromFile(const char *fileName);
 
         stepResult getWaitingTime(bool mode=true) const;
+        
+        bool setRoute(const std::string &vehicle_id, const std::vector<std::string> &anchor_id);
+
+        std::map<std::string, std::string> getVehicleInfo(const std::string &id) const;
     };
 
 }
